@@ -12,7 +12,7 @@ from twisted.internet.protocol import ClientFactory
 from twisted.protocols.basic import LineOnlyReceiver
 
 
-class Client(LineOnlyReceiver):
+class ConnectorProtocol(LineOnlyReceiver):
     factory: 'Connector'
 
     def connectionMade(self):
@@ -25,14 +25,14 @@ class Client(LineOnlyReceiver):
 
 class Connector(ClientFactory):
     window: 'ChatWindow'
-    protocol = Client
+    protocol = ConnectorProtocol
 
     def __init__(self, app_window):
         self.window = app_window
 
 
 class ChatWindow(QtWidgets.QMainWindow, design.Ui_MainWindow):
-    protocol: Client
+    protocol: ConnectorProtocol
     reactor = None
 
     def __init__(self):
