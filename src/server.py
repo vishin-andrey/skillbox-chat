@@ -30,8 +30,7 @@ class ServerProtocol(LineOnlyReceiver):
             content = f"Message from {self.login}: {content}"
 
             for user in self.factory.clients:
-                if user is not self:
-                    user.sendLine(content.encode())
+                user.sendLine(content.encode())
         else:
             # login:admin -> admin
             if content.startswith("login:"):
