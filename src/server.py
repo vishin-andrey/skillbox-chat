@@ -16,10 +16,6 @@ class ServerProtocol(LineOnlyReceiver):
     factory: 'Server'
     login: str = None
 
-    def connectionMade(self):
-        # Потенциальный баг для внимательных =)
-        self.factory.clients.append(self)
-
     def connectionLost(self, reason=connectionDone):
         self.factory.clients.remove(self)
 
@@ -29,14 +25,23 @@ class ServerProtocol(LineOnlyReceiver):
         if self.login is not None:
             content = f"Message from {self.login}: {content}"
 
+            self.factory.history.append(content)
+
             for user in self.factory.clients:
-                if user is not self:
-                    user.sendLine(content.encode())
+                user.sendLine(content.encode())
         else:
             # login:admin -> admin
             if content.startswith("login:"):
-                self.login = content.replace("login:", "")
-                self.sendLine("Welcome!".encode())
+                login = content.replace("login:", "")
+
+                for user in self.factory.clients:
+                    if user.login == login:
+                        self.sendLine("Login already exists! Try another one".encode())
+                        return
+
+                self.login = login
+                self.factory.clients.append(self)
+                self.factory.send_history(self)
             else:
                 self.sendLine("Invalid login".encode())
 
@@ -44,13 +49,23 @@ class ServerProtocol(LineOnlyReceiver):
 class Server(ServerFactory):
     protocol = ServerProtocol
     clients: list
+    history: list
 
     def startFactory(self):
         self.clients = []
+        self.history = []
         print("Server started")
 
     def stopFactory(self):
         print("Server closed")
+
+    def send_history(self, client: ServerProtocol):
+        client.sendLine("Welcome!".encode())
+
+        last_messages = self.history[-10:]
+
+        for msg in last_messages:
+            client.sendLine(msg.encode())
 
 
 reactor.listenTCP(1234, Server())
