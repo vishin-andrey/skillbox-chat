@@ -14,7 +14,10 @@
 #  2. from twisted import ... - подключить в файле .py
 #
 from twisted.internet import protocol, reactor, endpoints
-
+# from twisted.internet import protocol, endpoints
+# from twisted.internet import gireactor # for non-GUI apps
+# gireactor.install()
+# from twisted.internet import reactor
 
 class Echo(protocol.Protocol):
     def dataReceived(self, data):
